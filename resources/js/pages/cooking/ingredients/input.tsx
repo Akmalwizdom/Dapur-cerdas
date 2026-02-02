@@ -1,7 +1,7 @@
 import CookingLayout from '@/layouts/cooking-layout';
-import { Link } from '@inertiajs/react';
-import { useState } from 'react';
-import { ArrowLeft, ArrowRight, Camera, Search, X } from 'lucide-react';
+import { Link, router, useForm } from '@inertiajs/react';
+import { useState, useRef } from 'react';
+import { ArrowLeft, ArrowRight, Camera, Search, X, Loader2 } from 'lucide-react';
 
 export default function IngredientInput() {
     const [ingredients, setIngredients] = useState([
@@ -11,6 +11,8 @@ export default function IngredientInput() {
         'Olive Oil',
     ]);
     const [inputValue, setInputValue] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const addIngredient = () => {
         if (inputValue.trim()) {
@@ -26,6 +28,42 @@ export default function IngredientInput() {
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             addIngredient();
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            // Using direct fetch for the API call to handle the 202 response
+            const response = await fetch('/api/ingredients/upload', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    // Note: CSRF token might be needed if using Sanctum session auth
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || ''
+                }
+            });
+
+            const data = await response.json();
+            
+            if (data.success && data.job_id) {
+                // Redirect to confirm page with jobId
+                router.visit(`/cooking/ingredients/confirm?job_id=${data.job_id}`);
+            } else {
+                alert('Upload failed: ' + (data.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Failed to upload image. Please check your connection.');
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -99,11 +137,27 @@ export default function IngredientInput() {
                         </div>
 
                         {/* Upload Placeholder */}
-                        <div className="flex flex-col items-center justify-center border-2 border-dashed border-[var(--cooking-primary)]/30 rounded-xl p-8 bg-[var(--cooking-primary)]/5 hover:bg-[var(--cooking-primary)]/10 transition-colors cursor-pointer group">
-                            <Camera className="w-10 h-10 text-[var(--cooking-primary)] mb-3 group-hover:scale-110 transition-transform" />
-                            <p className="font-bold text-[var(--cooking-primary)] text-lg">Upload a photo</p>
+                        <div 
+                            onClick={() => !isUploading && fileInputRef.current?.click()}
+                            className={`flex flex-col items-center justify-center border-2 border-dashed border-[var(--cooking-primary)]/30 rounded-xl p-8 bg-[var(--cooking-primary)]/5 transition-colors cursor-pointer group ${isUploading ? 'opacity-50 cursor-wait' : 'hover:bg-[var(--cooking-primary)]/10'}`}
+                        >
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                className="hidden" 
+                                accept="image/*"
+                                onChange={handleFileUpload}
+                            />
+                            {isUploading ? (
+                                <Loader2 className="w-10 h-10 text-[var(--cooking-primary)] mb-3 animate-spin" />
+                            ) : (
+                                <Camera className="w-10 h-10 text-[var(--cooking-primary)] mb-3 group-hover:scale-110 transition-transform" />
+                            )}
+                            <p className="font-bold text-[var(--cooking-primary)] text-lg">
+                                {isUploading ? 'Analyzing photo...' : 'Upload a photo'}
+                            </p>
                             <p className="text-sm text-gray-500 mt-1 italic">
-                                Scan your fridge or grocery receipt
+                                {isUploading ? 'Detecting ingredients with AI...' : 'Scan your fridge or grocery receipt'}
                             </p>
                         </div>
 

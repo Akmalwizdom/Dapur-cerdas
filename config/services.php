@@ -35,4 +35,64 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | YOLO Service (Computer Vision - Ingredient Detection)
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the YOLO microservice that performs ingredient
+    | detection from photos. This is a separate Python/FastAPI service.
+    |
+    */
+
+    'yolo' => [
+        'url' => env('YOLO_SERVICE_URL', 'http://localhost:8000'),
+        'timeout' => 30,  // seconds
+        'endpoints' => [
+            'detect' => '/detect',
+            'health' => '/health',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Generative AI Service (Recipe Recommendation)
+    |--------------------------------------------------------------------------
+    |
+    | Using Google Gemini for recipe generation.
+    | Only GEMINI_API_KEY needs to be set in .env
+    |
+    */
+
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'model' => 'gemini-2.0-flash',
+        'base_url' => 'https://generativelanguage.googleapis.com/v1beta',
+        'timeout' => 60,  // seconds
+        'max_tokens' => 4096,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Image Upload Settings
+    |--------------------------------------------------------------------------
+    */
+
+    'upload' => [
+        'temp_path' => storage_path('app/tmp'),
+        'max_size_kb' => 5120,  // 5MB
+        'allowed_types' => ['jpg', 'jpeg', 'png', 'webp'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rate Limiting (requests per user per minute)
+    |--------------------------------------------------------------------------
+    */
+
+    'rate_limits' => [
+        'image_upload' => 10,
+        'recipe_generation' => 5,
+    ],
+
 ];

@@ -3,40 +3,25 @@ import { Link } from '@inertiajs/react';
 import { Clock, Users, Timer, Lightbulb, Share2, PlayCircle, CheckCircle2 } from 'lucide-react';
 import { useState } from 'react';
 
-const ingredients = [
-    '2 Fresh Salmon Fillets (6oz each)',
-    '4 tbsp Unsalted Butter, softened',
-    '2 cloves Garlic, finely minced',
-    '1 tbsp Fresh Parsley, chopped',
-    '1/2 Lemon (for zest and juice)',
-    'Kosher Salt & Cracked Black Pepper',
-];
+interface Ingredient {
+    name: string;
+    amount: string;
+}
 
-const steps = [
-    {
-        number: '01',
-        title: 'Prepare the Herb Butter',
-        description: 'In a small bowl, combine the softened butter, minced garlic, parsley, lemon zest, and a pinch of salt. Mix well until creamy and set aside.',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBHDhhKV3Co1s1AZf6d0r_2AwwxyxsvUKPLdc8JeiyheFefznjBCSwrLc4QQUiRuWHEG0Z0vjzz0P_GL2XgrQ1KcXnap917Vp-Slh9ieFppneFQ7_BpqEHqheVFvsm795b_701-0o5j7wNBjBZ0NrfUaYrFLfy3-1adTWTmpD8whE59w9n3H2RQu0auFfkzI4bQOrbjsHH2wEF-u_L_GJyBkzpxmOg8k3PiA_uU5rNT-nqJ6wX2pgkJUHvYDZc7wZjHmFXJYVGpSsJL',
-    },
-    {
-        number: '02',
-        title: 'Season and Sear',
-        description: 'Season the salmon generously with salt and pepper. Heat a large non-stick skillet over medium-high heat with a drizzle of oil. Once shimmering, place salmon fillets skin-side down.',
-    },
-    {
-        number: '03',
-        title: 'The Perfect Finish',
-        description: 'Sear for 4-5 minutes until the skin is crispy. Flip and immediately top each fillet with a generous dollop of the herb butter. Cook for another 3-4 minutes, spooning the melting butter over the fish.',
-    },
-    {
-        number: '04',
-        title: 'Rest and Serve',
-        description: 'Remove from heat and let rest for 2 minutes. Serve with fresh lemon wedges and your choice of seasonal greens.',
-    },
-];
+interface RecipeProps {
+    recipe: {
+        id: number;
+        title: string;
+        description: string;
+        cooking_time: number;
+        difficulty: string;
+        ingredients: Ingredient[];
+        instructions: string[];
+        nutrition: any;
+    };
+}
 
-export default function RecipeShow() {
+export default function RecipeShow({ recipe }: RecipeProps) {
     const [checkedIngredients, setCheckedIngredients] = useState<number[]>([]);
 
     const toggleIngredient = (index: number) => {
@@ -47,8 +32,10 @@ export default function RecipeShow() {
         }
     };
 
+    if (!recipe) return null;
+
     return (
-        <CookingLayout title="Pan-Seared Salmon - DapurCerdas">
+        <CookingLayout title={`${recipe.title} - DapurCerdas`}>
             <main className="max-w-[1000px] mx-auto px-6 py-10 pb-32">
                 {/* Header Image & Title Section */}
                 <div className="mb-12">
@@ -56,15 +43,15 @@ export default function RecipeShow() {
                         <div 
                             className="absolute inset-0 bg-cover bg-center transform transition-transform duration-700 group-hover:scale-105"
                             style={{ 
-                                backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0) 60%, rgba(0,0,0,0.6) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuCHaynYrhNWFGD5sG665WTa-9HMnhvQpntloaEpAtzFjbmJd2lQf5klecW8WHqCu9ciPDa5u0ZXbdOsyFr1tQ1NfQ9zi7nQRxFM62Kvs4u535hTdJ9j5vHxxYPHq2pa0KpmbBOECtL-9Nj5Jjvcs-DOApgBCk1MJezV5w2VWQ0N5TpElLOCI4kZd-Nn2xWkFoJ0tsKQ1JG_TqK4Q_39p3uxKgpWTI_H4O4nu2Yk-OJoV0o9-L_OfEeJI3-v2niT3KwRS-fJBqsw3-IW")` 
+                                backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0) 60%, rgba(0,0,0,0.6) 100%), url("https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1000&auto=format&fit=crop")` 
                             }}
                         />
                         <div className="absolute bottom-0 left-0 p-8 w-full">
                             <span className="bg-[var(--cooking-primary)] text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-widest mb-4 inline-block">
-                                Chef's Choice
+                                Generated for You
                             </span>
                             <h1 className="text-white text-5xl md:text-6xl font-bold leading-tight drop-shadow-lg font-['Newsreader',serif]">
-                                Pan-Seared Salmon with Herb Butter
+                                {recipe.title}
                             </h1>
                         </div>
                     </div>
@@ -72,8 +59,8 @@ export default function RecipeShow() {
                     {/* Metadata Stats */}
                     <div className="flex flex-wrap gap-4 mb-8">
                         {[
-                            { label: 'Prep Time', value: '15 mins', icon: Clock },
-                            { label: 'Cook Time', value: '12 mins', icon: PlayCircle }, // Closest to 'cooking' symbol
+                            { label: 'Time', value: `${recipe.cooking_time} mins`, icon: Clock },
+                            { label: 'Difficulty', value: recipe.difficulty, icon: PlayCircle },
                             { label: 'Servings', value: '2 People', icon: Users },
                         ].map((stat) => (
                             <div key={stat.label} className="flex-1 min-w-[140px] flex flex-col gap-1 rounded-xl p-6 border border-[var(--cooking-border)] bg-white/50 dark:bg-white/5 dark:border-white/10">
@@ -81,16 +68,9 @@ export default function RecipeShow() {
                                     <stat.icon className="w-5 h-5" />
                                     <p className="text-sm font-bold uppercase tracking-wider">{stat.label}</p>
                                 </div>
-                                <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                                <p className="text-2xl font-bold mt-1 capitalize">{stat.value}</p>
                             </div>
                         ))}
-                        <div className="flex-1 min-w-[140px] flex flex-col gap-1 rounded-xl p-6 bg-[var(--cooking-primary)]/10 border border-[var(--cooking-primary)]/20">
-                            <div className="flex items-center gap-2 text-[var(--cooking-primary)]">
-                                <Timer className="w-5 h-5" />
-                                <p className="text-sm font-bold uppercase tracking-wider">Total Time</p>
-                            </div>
-                            <p className="text-2xl font-bold mt-1">27 mins</p>
-                        </div>
                     </div>
                 </div>
 
@@ -102,7 +82,7 @@ export default function RecipeShow() {
                                 Ingredients
                             </h2>
                             <ul className="space-y-4">
-                                {ingredients.map((ing, idx) => (
+                                {recipe.ingredients.map((ing, idx) => (
                                     <li key={idx} className="flex items-start gap-3 group">
                                         <label className="flex items-start gap-4 cursor-pointer">
                                             <div className="relative mt-1">
@@ -116,7 +96,7 @@ export default function RecipeShow() {
                                                 <CheckCircle2 className="absolute top-0 left-0 w-5 h-5 text-white opacity-0 transition-opacity peer-checked:opacity-100 p-0.5" />
                                             </div>
                                             <span className={`text-lg leading-tight group-hover:text-[var(--cooking-primary)] transition-all ${checkedIngredients.includes(idx) ? 'line-through opacity-50' : ''}`}>
-                                                {ing}
+                                                {ing.amount} {ing.name}
                                             </span>
                                         </label>
                                     </li>
@@ -140,21 +120,16 @@ export default function RecipeShow() {
                             Preparation
                         </h2>
                         <div className="space-y-12">
-                            {steps.map((step) => (
-                                <div key={step.number} className="flex gap-6">
+                            {recipe.instructions.map((step, idx) => (
+                                <div key={idx} className="flex gap-6">
                                     <span className="text-5xl font-bold text-[var(--cooking-primary)]/30 font-['Newsreader',serif] shrink-0">
-                                        {step.number}
+                                        {(idx + 1).toString().padStart(2, '0')}
                                     </span>
                                     <div className="flex-1">
-                                        <h3 className="text-xl font-bold mb-3 tracking-tight">{step.title}</h3>
+                                        <h3 className="text-xl font-bold mb-3 tracking-tight">Step {idx + 1}</h3>
                                         <p className="text-lg text-[var(--cooking-text-muted)] leading-relaxed mb-4 dark:text-gray-300">
-                                            {step.description}
+                                            {step}
                                         </p>
-                                        {step.image && (
-                                            <div className="w-full h-48 bg-gray-100 rounded-lg overflow-hidden dark:bg-white/5">
-                                                <img alt={step.title} className="w-full h-full object-cover opacity-80" src={step.image} />
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -168,7 +143,7 @@ export default function RecipeShow() {
                 <div className="max-w-[1000px] mx-auto flex items-center justify-between">
                     <div className="hidden md:block">
                         <p className="text-xs uppercase tracking-widest font-bold text-[var(--cooking-primary)] mb-1">Current Recipe</p>
-                        <p className="font-bold text-lg">Pan-Seared Salmon</p>
+                        <p className="font-bold text-lg">{recipe.title}</p>
                     </div>
                     <div className="flex gap-4 w-full md:w-auto">
                         <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 border border-[var(--cooking-border)] rounded-xl font-bold hover:bg-gray-50 transition-colors dark:border-white/20 dark:hover:bg-white/10">
@@ -176,7 +151,7 @@ export default function RecipeShow() {
                             Share
                         </button>
                         <Link
-                            href="/cooking/cook/1"
+                            href={`/cooking/cook/${recipe.id}`}
                             className="flex-[2] md:flex-none flex items-center justify-center gap-2 px-12 py-4 bg-[var(--cooking-primary)] text-white rounded-xl font-bold text-lg hover:brightness-110 shadow-lg shadow-[var(--cooking-primary)]/20 transition-all"
                         >
                             <PlayCircle className="w-6 h-6" />

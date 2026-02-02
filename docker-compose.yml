@@ -1,0 +1,95 @@
+# ==============================================================================
+# DapurCerdas - Docker Compose Configuration
+# ==============================================================================
+# Orchestrates all services: Laravel Backend, YOLO Service, Redis
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # YOLO Service (Ingredient Detection)
+  # ============================================================================
+  yolo-service:
+    build:
+      context: ./yolo-service
+      dockerfile: Dockerfile
+    container_name: dapurcerdas-yolo
+    restart: unless-stopped
+    ports:
+      - "${YOLO_PORT:-8000}:8000"
+    environment:
+      - YOLO_SERVICE_HOST=0.0.0.0
+      - YOLO_SERVICE_PORT=8000
+      - YOLO_SERVICE_SECRET=${YOLO_SERVICE_SECRET}
+      - YOLO_MODEL_PATH=${YOLO_MODEL_PATH:-yolo11n.pt}
+      - YOLO_CONFIDENCE_THRESHOLD=${YOLO_CONFIDENCE_THRESHOLD:-0.5}
+      - YOLO_DEVICE=${YOLO_DEVICE:-cpu}
+      - ULTRALYTICS_API_KEY=${ULTRALYTICS_API_KEY:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      # Mount custom models (optional)
+      - ./yolo-service/models:/app/models:ro
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health').raise_for_status()" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - dapurcerdas-network
+
+  # ============================================================================
+  # Redis (Queue & Cache for Laravel)
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: dapurcerdas-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dapurcerdas-network
+  # ============================================================================
+  # Laravel Backend (uncomment when ready)
+  # ============================================================================
+  # laravel:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: dapurcerdas-api
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${LARAVEL_PORT:-8080}:80"
+  #   environment:
+  #     - YOLO_SERVICE_URL=http://yolo-service:8000
+  #     - REDIS_HOST=redis
+  #   depends_on:
+  #     yolo-service:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - dapurcerdas-network
+
+  # ==============================================================================
+  # Volumes
+  # ==============================================================================
+volumes:
+  redis-data:
+    driver: local
+
+# ==============================================================================
+# Networks
+# ==============================================================================
+networks:
+  dapurcerdas-network:
+    driver: bridge

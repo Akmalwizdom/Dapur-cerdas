@@ -1,0 +1,103 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Recipe;
+use App\Services\GeminiService;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+
+class RecipeController extends Controller
+{
+    public function __construct(
+        protected GeminiService $gemini
+    ) {}
+
+    /**
+     * Generate a recipe from a list of ingredients.
+     */
+    public function generate(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ingredients' => 'required|array|min:1',
+            'ingredients.*' => 'string|max:50',
+        ]);
+
+        try {
+            $recipeData = $this->gemini->generateRecipe($request->ingredients);
+
+            // Create recipe in database
+            $recipe = Recipe::create([
+                'user_id' => $request->user()->id,
+                'title' => $recipeData['title'] ?? 'Untitled Recipe',
+                'description' => $recipeData['description'] ?? '',
+                'cooking_time' => $recipeData['cooking_time'] ?? null,
+                'difficulty' => $recipeData['difficulty'] ?? 'easy',
+                'ingredients' => $recipeData['ingredients'] ?? [],
+                'instructions' => $recipeData['instructions'] ?? [],
+                'nutrition' => $recipeData['nutrition'] ?? null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $recipe,
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Recipe Generation Failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate recipe. Please try again later.'
+            ], 500);
+        }
+    }
+
+    /**
+     * List user's recipes.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $recipes = $request->user()->recipes()
+            ->latest()
+            ->paginate(10);
+
+        return response()->json([
+            'success' => true,
+            'data' => $recipes
+        ]);
+    }
+
+    /**
+     * Get single recipe detail.
+     */
+    public function show(Recipe $recipe): JsonResponse
+    {
+        // Check if recipe belongs to user
+        if ($recipe->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $recipe
+        ]);
+    }
+
+    /**
+     * Toggle favorite status.
+     */
+    public function toggleFavorite(Recipe $recipe): JsonResponse
+    {
+        if ($recipe->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $recipe->update(['is_favorite' => !$recipe->is_favorite]);
+
+        return response()->json([
+            'success' => true,
+            'is_favorite' => $recipe->is_favorite
+        ]);
+    }
+}

@@ -34,8 +34,13 @@ Route::prefix('cooking')->group(function () {
             return Inertia::render('cooking/recipes/recommendations');
         })->name('cooking.recipes.recommendations');
 
-        Route::get('/{id}', function () {
-            return Inertia::render('cooking/recipes/show');
+        Route::get('/{recipe}', function (\App\Models\Recipe $recipe) {
+            if ($recipe->user_id !== auth()->id()) {
+                abort(403);
+            }
+            return Inertia::render('cooking/recipes/show', [
+                'recipe' => $recipe
+            ]);
         })->name('cooking.recipes.show');
     });
 
