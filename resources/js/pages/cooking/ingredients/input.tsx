@@ -53,14 +53,16 @@ export default function IngredientInput() {
         formData.append('image', file);
 
         try {
-            const response = await fetch('/api/ingredients/upload', {
+                const response = await fetch('/api/ingredients/upload', {
                 method: 'POST',
                 body: formData,
                 headers: {
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || ''
-                }
+                },
+                credentials: 'include'
             });
+
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
