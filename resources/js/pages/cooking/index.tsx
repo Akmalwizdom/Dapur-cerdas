@@ -40,9 +40,12 @@ export default function CookingHome() {
                             >
                                 <span className="truncate">Cook with ingredients</span>
                             </Link>
-                            <button className="flex-1 flex min-w-[160px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-6 bg-gray-100 text-[var(--cooking-text)] text-lg font-bold leading-normal tracking-wide hover:bg-gray-200 transition-all dark:bg-white/10 dark:text-white">
+                            <Link
+                                href="/cooking/ingredients/input?action=upload"
+                                className="flex-1 flex min-w-[160px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-6 bg-gray-100 text-[var(--cooking-text)] text-lg font-bold leading-normal tracking-wide hover:bg-gray-200 transition-all dark:bg-white/10 dark:text-white"
+                            >
                                 <span className="truncate">Use ingredient photo</span>
-                            </button>
+                            </Link>
                         </div>
                     </div>
 

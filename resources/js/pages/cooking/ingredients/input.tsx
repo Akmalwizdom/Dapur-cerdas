@@ -1,7 +1,8 @@
 import CookingLayout from '@/layouts/cooking-layout';
 import { Link, router, useForm } from '@inertiajs/react';
 import { useState, useRef } from 'react';
-import { ArrowLeft, ArrowRight, Camera, Search, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Camera, Search, X, Loader2, AlertCircle } from 'lucide-react';
+import { useEffect } from 'react';
 
 export default function IngredientInput() {
     const [ingredients, setIngredients] = useState([
@@ -12,7 +13,18 @@ export default function IngredientInput() {
     ]);
     const [inputValue, setInputValue] = useState('');
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Auto-trigger photo upload if coming from Home page with action=upload
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('action') === 'upload') {
+            fileInputRef.current?.click();
+            // Remove the action from URL to prevent re-triggering on refresh
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+    }, []);
 
     const addIngredient = () => {
         if (inputValue.trim()) {
@@ -36,34 +48,41 @@ export default function IngredientInput() {
         if (!file) return;
 
         setIsUploading(true);
+        setUploadError(null);
         const formData = new FormData();
         formData.append('image', file);
 
         try {
-            // Using direct fetch for the API call to handle the 202 response
             const response = await fetch('/api/ingredients/upload', {
                 method: 'POST',
                 body: formData,
                 headers: {
                     'Accept': 'application/json',
-                    // Note: CSRF token might be needed if using Sanctum session auth
                     'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || ''
                 }
             });
 
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                if (response.status === 413) throw new Error('File is too large (max 5MB)');
+                if (response.status === 419) throw new Error('Session expired. Please refresh the page.');
+                if (response.status === 401) throw new Error('Please log in to upload photos.');
+                throw new Error(errorData.message || `Upload failed with status ${response.status}`);
+            }
+
             const data = await response.json();
             
             if (data.success && data.job_id) {
-                // Redirect to confirm page with jobId
                 router.visit(`/cooking/ingredients/confirm?job_id=${data.job_id}`);
             } else {
-                alert('Upload failed: ' + (data.message || 'Unknown error'));
+                setUploadError(data.message || 'Detection service unreachable');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Upload error:', error);
-            alert('Failed to upload image. Please check your connection.');
+            setUploadError(error.message || 'Failed to connect to the server. Please try again.');
         } finally {
             setIsUploading(false);
+            if (e.target) e.target.value = ''; // Reset file input
         }
     };
 
@@ -136,10 +155,24 @@ export default function IngredientInput() {
                             </div>
                         </div>
 
+                        {/* Upload Error Message */}
+                        {uploadError && (
+                            <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl dark:bg-red-900/20 dark:border-red-500/30 dark:text-red-400 animate-in fade-in slide-in-from-top-2">
+                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                                <p className="font-semibold">{uploadError}</p>
+                                <button 
+                                    onClick={() => setUploadError(null)}
+                                    className="ml-auto hover:opacity-70"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
+
                         {/* Upload Placeholder */}
                         <div 
                             onClick={() => !isUploading && fileInputRef.current?.click()}
-                            className={`flex flex-col items-center justify-center border-2 border-dashed border-[var(--cooking-primary)]/30 rounded-xl p-8 bg-[var(--cooking-primary)]/5 transition-colors cursor-pointer group ${isUploading ? 'opacity-50 cursor-wait' : 'hover:bg-[var(--cooking-primary)]/10'}`}
+                            className={`flex flex-col items-center justify-center border-2 border-dashed border-[var(--cooking-primary)]/30 rounded-xl p-8 bg-[var(--cooking-primary)]/5 transition-colors cursor-pointer group ${isUploading ? 'opacity-50 cursor-wait' : 'hover:bg-[var(--cooking-primary)]/10'} ${uploadError ? 'border-red-300' : ''}`}
                         >
                             <input 
                                 type="file" 
