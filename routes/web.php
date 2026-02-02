@@ -14,7 +14,7 @@ Route::get('dashboard', function () {
     return Inertia::render('cooking/index');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::prefix('cooking')->group(function () {
+Route::middleware(['auth', 'verified'])->prefix('cooking')->group(function () {
     Route::get('/', function () {
         return Inertia::render('cooking/index');
     })->name('cooking.home');
@@ -23,6 +23,9 @@ Route::prefix('cooking')->group(function () {
         Route::get('/input', function () {
             return Inertia::render('cooking/ingredients/input');
         })->name('cooking.ingredients.input');
+
+        Route::post('/upload', [App\Http\Controllers\Api\IngredientController::class, 'upload'])->name('cooking.ingredients.upload');
+        Route::get('/jobs/{jobId}', [App\Http\Controllers\Api\IngredientController::class, 'checkJobStatus'])->name('cooking.jobs.status');
 
         Route::get('/confirm', function () {
             return Inertia::render('cooking/ingredients/confirm');
@@ -33,6 +36,10 @@ Route::prefix('cooking')->group(function () {
         Route::get('/', function () {
             return Inertia::render('cooking/recipes/recommendations');
         })->name('cooking.recipes.recommendations');
+
+        Route::get('/list', [App\Http\Controllers\Api\RecipeController::class, 'index'])->name('cooking.recipes.index');
+        Route::post('/generate', [App\Http\Controllers\Api\RecipeController::class, 'generate'])->name('cooking.recipes.generate');
+        Route::post('/{recipe}/favorite', [App\Http\Controllers\Api\RecipeController::class, 'toggleFavorite'])->name('cooking.recipes.favorite');
 
         Route::get('/{recipe}', function (\App\Models\Recipe $recipe) {
             if ($recipe->user_id !== auth()->id()) {

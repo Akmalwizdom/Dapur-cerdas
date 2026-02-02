@@ -53,7 +53,7 @@ export default function IngredientInput() {
         formData.append('image', file);
 
         try {
-                const response = await fetch('/api/ingredients/upload', {
+                const response = await fetch('/cooking/ingredients/upload', {
                 method: 'POST',
                 body: formData,
                 headers: {

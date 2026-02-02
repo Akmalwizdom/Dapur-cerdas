@@ -23,7 +23,7 @@ class IngredientController extends Controller
 
         $jobId = (string) Str::uuid();
         $path = $request->file('image')->store('temp/ingredients', 'public');
-        $fullPath = storage_path('app/public/' . $path);
+        $fullPath = Storage::disk('public')->path($path);
 
         // Track job initial state
         Cache::put("job_{$jobId}", [

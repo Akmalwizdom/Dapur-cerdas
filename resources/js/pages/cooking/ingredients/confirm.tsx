@@ -19,7 +19,7 @@ export default function ConfirmIngredients() {
 
         const pollInterval = setInterval(async () => {
             try {
-                const response = await fetch(`/api/jobs/${jobId}`);
+                const response = await fetch(`/cooking/ingredients/jobs/${jobId}`);
                 const data = await response.json();
 
                 if (data.success) {
@@ -54,7 +54,7 @@ export default function ConfirmIngredients() {
         if (ingredients.length === 0) return;
 
         try {
-            const response = await fetch('/api/recipes/generate', {
+            const response = await fetch('/cooking/recipes/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
