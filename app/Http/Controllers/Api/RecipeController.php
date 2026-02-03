@@ -68,11 +68,49 @@ class RecipeController extends Controller
     {
         $recipes = $request->user()->recipes()
             ->latest()
-            ->get();
+            ->paginate(12);
 
         return \Inertia\Inertia::render('cooking/recipes/index', [
             'recipes' => $recipes
         ]);
+    }
+
+    /**
+     * Update a recipe.
+     */
+    public function update(Request $request, Recipe $recipe)
+    {
+        if ($recipe->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'cooking_time' => 'nullable|integer',
+            'difficulty' => 'required|in:easy,medium,hard',
+            'ingredients' => 'required|array',
+            'instructions' => 'required|array',
+            'image_url' => 'nullable|string',
+        ]);
+
+        $recipe->update($validated);
+
+        return back()->with('success', 'Recipe updated successfully');
+    }
+
+    /**
+     * Delete a recipe.
+     */
+    public function destroy(Recipe $recipe)
+    {
+        if ($recipe->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $recipe->delete();
+
+        return back()->with('success', 'Recipe deleted successfully');
     }
 
     /**
