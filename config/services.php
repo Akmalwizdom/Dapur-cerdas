@@ -35,24 +35,6 @@ return [
         ],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | YOLO Service (Computer Vision - Ingredient Detection)
-    |--------------------------------------------------------------------------
-    |
-    | Configuration for the YOLO microservice that performs ingredient
-    | detection from photos. This is a separate Python/FastAPI service.
-    |
-    */
-
-    'yolo' => [
-        'url' => env('YOLO_SERVICE_URL', 'http://localhost:8000'),
-        'timeout' => 30,  // seconds
-        'endpoints' => [
-            'detect' => '/detect',
-            'health' => '/health',
-        ],
-    ],
 
     /*
     |--------------------------------------------------------------------------

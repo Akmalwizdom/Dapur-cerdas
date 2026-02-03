@@ -66,6 +66,81 @@ class GeminiService
     }
 
     /**
+     * Detect ingredients from an image.
+     *
+     * @param string $imagePath
+     * @return array
+     * @throws Exception
+     */
+    public function detectIngredients(string $imagePath): array
+    {
+        if (empty($this->apiKey)) {
+            throw new Exception('Gemini API key is not configured.');
+        }
+
+        if (!file_exists($imagePath)) {
+            throw new Exception("Image file not found: {$imagePath}");
+        }
+
+        $imageData = base64_encode(file_get_contents($imagePath));
+        $mimeType = mime_content_type($imagePath);
+
+        $prompt = "You are a cautious cooking assistant with visual understanding.
+Analyze the image and list only ingredients that are clearly visible or very likely present.
+If unsure, mark the ingredient as uncertain.
+Do not guess, infer, or add ingredients not supported by the image.
+
+Return the result in strictly JSON format with this structure:
+{
+  \"ingredients\": [
+    {
+      \"name\": \"ingredient name\",
+      \"confidence\": \"high | medium | low\",
+      \"note\": \"reason if confidence is not high\"
+    }
+  ]
+}";
+
+        try {
+            $response = Http::timeout(60)
+                ->post("https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}", [
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => $prompt],
+                                [
+                                    'inline_data' => [
+                                        'mime_type' => $mimeType,
+                                        'data' => $imageData
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ],
+                    'generationConfig' => [
+                        'response_mime_type' => 'application/json',
+                    ]
+                ]);
+
+            if ($response->failed()) {
+                Log::error('Gemini Detection API Error', [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+                throw new Exception("Gemini API returned error: {$response->status()}");
+            }
+
+            $result = $response->json();
+            $text = $result['candidates'][0]['content']['parts'][0]['text'] ?? '{"ingredients": []}';
+            
+            return json_decode($text, true);
+        } catch (Exception $e) {
+            Log::error('Gemini Detection API Failed', ['error' => $e->getMessage()]);
+            throw $e;
+        }
+    }
+
+    /**
      * Build the prompt for Gemini.
      */
     protected function buildPrompt(array $ingredients): string

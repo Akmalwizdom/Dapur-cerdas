@@ -7,7 +7,7 @@ use Illuminate\Foundation\Queue\Queueable;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use App\Services\YoloService;
+use App\Services\GeminiService;
 
 class DetectIngredientsJob implements ShouldQueue
 {
@@ -18,20 +18,32 @@ class DetectIngredientsJob implements ShouldQueue
         protected string $imagePath
     ) {}
 
-    public function handle(YoloService $yolo): void
+    public function handle(GeminiService $gemini): void
     {
         Cache::put("job_{$this->jobId}", ['status' => 'processing'], now()->addMinutes(10));
 
         try {
-            $results = $yolo->detect($this->imagePath);
+            $results = $gemini->detectIngredients($this->imagePath);
+            $ingredients = $results['ingredients'] ?? [];
+
+            // Map Gemini results to the format expected by the frontend for backward compatibility
+            // YOLO originally returned: { name: '...', confidence: 0.9, box_2d: [...] }
+            // Gemini returns: { name: '...', confidence: 'high|medium|low', note: '...' }
+            $formattedResults = array_map(function($ing) {
+                return [
+                    'label' => $ing['name'] ?? 'Unknown',
+                    'confidence' => $ing['confidence'] ?? 'medium',
+                    'note' => $ing['note'] ?? null,
+                ];
+            }, $ingredients);
 
             Cache::put("job_{$this->jobId}", [
                 'status' => 'completed',
-                'results' => $results['detections'] ?? [],
-                'count' => $results['detection_count'] ?? 0
+                'results' => $formattedResults,
+                'count' => count($formattedResults)
             ], now()->addMinutes(30));
 
-            Log::info("Detection job {$this->jobId} completed successfully.");
+            Log::info("Detection job {$this->jobId} completed successfully via Gemini.");
         } catch (\Exception $e) {
             Cache::put("job_{$this->jobId}", [
                 'status' => 'failed',
