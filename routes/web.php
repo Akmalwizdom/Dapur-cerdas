@@ -38,6 +38,7 @@ Route::middleware(['auth', 'verified'])->prefix('cooking')->group(function () {
         })->name('cooking.recipes.recommendations');
 
         Route::get('/list', [App\Http\Controllers\Api\RecipeController::class, 'index'])->name('cooking.recipes.index');
+        Route::post('/', [App\Http\Controllers\Api\RecipeController::class, 'store'])->name('cooking.recipes.store'); // Manual creation
         Route::get('/my-recipes', [App\Http\Controllers\Api\RecipeController::class, 'myRecipes'])->name('cooking.recipes.my');
         Route::patch('/{recipe}', [App\Http\Controllers\Api\RecipeController::class, 'update'])->name('cooking.recipes.update');
         Route::delete('/{recipe}', [App\Http\Controllers\Api\RecipeController::class, 'destroy'])->name('cooking.recipes.destroy');

@@ -1,6 +1,6 @@
 import CookingLayout from '@/layouts/cooking-layout';
 import { Link, useForm, router } from '@inertiajs/react';
-import { Clock, SignalHigh, ArrowRight, Heart, Trash2, Pencil, X, Plus, Save, Loader2, BookOpen } from 'lucide-react';
+import { Clock, SignalHigh, ArrowRight, Heart, Trash2, Pencil, X, Plus, Save, Loader2, BookOpen, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import {
     Dialog,
@@ -55,14 +55,15 @@ interface Props {
 
 export default function MyRecipes({ recipes }: Props) {
     const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+    const [isCreating, setIsCreating] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [recipeToDelete, setRecipeToDelete] = useState<number | null>(null);
 
-    const { data, setData, patch, processing, errors, reset } = useForm({
+    const { data, setData, post, patch, processing, errors, reset } = useForm({
         title: '',
         description: '',
         cooking_time: 0,
-        difficulty: 'easy',
+        difficulty: 'easy' as 'easy' | 'medium' | 'hard',
         ingredients: [] as any[],
         instructions: [] as string[],
         image_url: '',
@@ -70,6 +71,7 @@ export default function MyRecipes({ recipes }: Props) {
 
     const openEditModal = (recipe: Recipe) => {
         setEditingRecipe(recipe);
+        setIsCreating(false);
         setData({
             title: recipe.title,
             description: recipe.description || '',
@@ -81,16 +83,39 @@ export default function MyRecipes({ recipes }: Props) {
         });
     };
 
-    const handleUpdate = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editingRecipe) return;
-
-        patch(`/cooking/recipes/${editingRecipe.id}`, {
-            onSuccess: () => {
-                setEditingRecipe(null);
-                reset();
-            },
+    const openCreateModal = () => {
+        setEditingRecipe(null);
+        setIsCreating(true);
+        reset();
+        setData({
+            title: '',
+            description: '',
+            cooking_time: 30,
+            difficulty: 'easy',
+            ingredients: [{ name: '', amount: '' }],
+            instructions: [''],
+            image_url: '',
         });
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        if (isCreating) {
+            post('/cooking/recipes', {
+                onSuccess: () => {
+                    setIsCreating(false);
+                    reset();
+                },
+            });
+        } else if (editingRecipe) {
+            patch(`/cooking/recipes/${editingRecipe.id}`, {
+                onSuccess: () => {
+                    setEditingRecipe(null);
+                    reset();
+                },
+            });
+        }
     };
 
     const confirmDelete = (id: number) => {
@@ -152,13 +177,23 @@ export default function MyRecipes({ recipes }: Props) {
                         </p>
                     </div>
                     
-                    <Link
-                        href="/cooking/ingredients/input"
-                        className="bg-[var(--cooking-primary)] text-white px-8 py-4 rounded-xl font-bold shadow-lg hover:scale-105 transition-all flex items-center gap-2"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Buat Resep Baru
-                    </Link>
+                    <div className="flex flex-wrap gap-3">
+                        <Link
+                            href="/cooking/ingredients/input"
+                            className="bg-white border-2 border-[var(--cooking-primary)] text-[var(--cooking-primary)] px-6 py-4 rounded-xl font-bold shadow-sm hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                        >
+                            <Sparkles className="w-5 h-5" />
+                            Magic AI
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={openCreateModal}
+                            className="bg-[var(--cooking-primary)] text-white px-8 py-4 rounded-xl font-bold shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+                        >
+                            <Plus className="w-5 h-5" />
+                            Buat Manual
+                        </button>
+                    </div>
                 </div>
 
                 {recipes.data.length === 0 ? (
@@ -167,9 +202,15 @@ export default function MyRecipes({ recipes }: Props) {
                             <BookOpen className="w-12 h-12" />
                         </div>
                         <h3 className="text-2xl font-bold">Belum ada resep tersimpan</h3>
-                        <Link href="/cooking/ingredients/input" className="inline-flex items-center gap-2 text-[var(--cooking-primary)] font-bold hover:underline">
-                            Klik di sini untuk mulai memasak <ArrowRight className="w-4 h-4" />
-                        </Link>
+                        <div className="flex justify-center gap-4">
+                            <Link href="/cooking/ingredients/input" className="inline-flex items-center gap-2 text-[var(--cooking-primary)] font-bold hover:underline">
+                                <Sparkles className="w-4 h-4" /> Magic AI
+                            </Link>
+                            <span className="text-gray-300">|</span>
+                            <button onClick={openCreateModal} className="inline-flex items-center gap-2 text-[var(--cooking-primary)] font-bold hover:underline">
+                                <Plus className="w-4 h-4" /> Buat Manual
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <>
@@ -249,15 +290,24 @@ export default function MyRecipes({ recipes }: Props) {
 
                 {/* --- Modals --- */}
                 
-                {/* Edit Modal */}
-                <Dialog open={!!editingRecipe} onOpenChange={(open) => !open && setEditingRecipe(null)}>
+                {/* Create/Edit Modal */}
+                <Dialog open={isCreating || !!editingRecipe} onOpenChange={(open) => {
+                    if (!open) {
+                        setIsCreating(false);
+                        setEditingRecipe(null);
+                    }
+                }}>
                     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle className="text-2xl font-['Newsreader',serif]">Edit Resep Savana</DialogTitle>
-                            <DialogDescription>Sesuaikan detail resep agar lebih pas dengan selera Anda.</DialogDescription>
+                            <DialogTitle className="text-2xl font-['Newsreader',serif]">
+                                {isCreating ? 'Buat Resep Baru' : 'Edit Resep'}
+                            </DialogTitle>
+                            <DialogDescription>
+                                {isCreating ? 'Tulis resep kreasi Anda sendiri dari awal.' : 'Sesuaikan detail resep agar lebih pas dengan selera Anda.'}
+                            </DialogDescription>
                         </DialogHeader>
 
-                        <form onSubmit={handleUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-8 py-6">
+                        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8 py-6">
                             {/* General Info */}
                             <div className="space-y-6">
                                 <div className="space-y-2">
@@ -378,10 +428,13 @@ export default function MyRecipes({ recipes }: Props) {
                             </div>
 
                             <DialogFooter className="md:col-span-2 pt-6 border-t dark:border-white/10">
-                                <Button type="button" variant="ghost" onClick={() => setEditingRecipe(null)}>Batal</Button>
+                                <Button type="button" variant="ghost" onClick={() => {
+                                    setEditingRecipe(null);
+                                    setIsCreating(false);
+                                }}>Batal</Button>
                                 <Button type="submit" disabled={processing} className="bg-[var(--cooking-primary)] hover:bg-[var(--cooking-primary)]/90 gap-2">
                                     {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    Simpan Perubahan
+                                    Simpan Resep
                                 </Button>
                             </DialogFooter>
                         </form>

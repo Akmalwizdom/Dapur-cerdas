@@ -16,6 +16,26 @@ class RecipeController extends Controller
     ) {}
 
     /**
+     * Store a newly created recipe in storage.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'cooking_time' => 'nullable|integer',
+            'difficulty' => 'required|in:easy,medium,hard',
+            'ingredients' => 'required|array',
+            'instructions' => 'required|array',
+            'image_url' => 'nullable|string',
+        ]);
+
+        $request->user()->recipes()->create($validated);
+
+        return back()->with('success', 'Recipe created successfully');
+    }
+
+    /**
      * Generate a recipe from a list of ingredients.
      */
     public function generate(Request $request): JsonResponse
