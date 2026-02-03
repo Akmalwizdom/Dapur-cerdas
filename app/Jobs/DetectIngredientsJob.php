@@ -31,8 +31,8 @@ class DetectIngredientsJob implements ShouldQueue
             // Gemini returns: { name: '...', confidence: 'high|medium|low', note: '...' }
             $formattedResults = array_map(function($ing) {
                 return [
-                    'label' => $ing['name'] ?? 'Unknown',
-                    'confidence' => $ing['confidence'] ?? 'medium',
+                    'class_name' => $ing['name'] ?? 'Unknown',
+                    'confidence' => (float)($ing['confidence'] ?? 0.5),
                     'note' => $ing['note'] ?? null,
                 ];
             }, $ingredients);

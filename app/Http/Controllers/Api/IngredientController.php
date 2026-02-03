@@ -29,6 +29,7 @@ class IngredientController extends Controller
         Cache::put("job_{$jobId}", [
             'status' => 'pending',
             'filename' => $request->file('image')->getClientOriginalName(),
+            'image_url' => Storage::disk('public')->url($path),
         ], now()->addMinutes(10));
 
         // Dispatch background job

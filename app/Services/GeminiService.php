@@ -85,21 +85,14 @@ class GeminiService
         $imageData = base64_encode(file_get_contents($imagePath));
         $mimeType = mime_content_type($imagePath);
 
-        $prompt = "You are a cautious cooking assistant with visual understanding.
-Analyze the image and list only ingredients that are clearly visible or very likely present.
-If unsure, mark the ingredient as uncertain.
-Do not guess, infer, or add ingredients not supported by the image.
-
-Return the result in strictly JSON format with this structure:
-{
-  \"ingredients\": [
-    {
-      \"name\": \"ingredient name\",
-      \"confidence\": \"high | medium | low\",
-      \"note\": \"reason if confidence is not high\"
-    }
-  ]
-}";
+        // Load prompt from resources
+        $promptPath = resource_path('prompts/vision/ingredient_detection.md');
+        if (!file_exists($promptPath)) {
+            Log::warning('Prompt file not found, using fallback.', ['path' => $promptPath]);
+            $prompt = "Analyze the image and list only ingredients that are clearly visible.";
+        } else {
+            $prompt = file_get_contents($promptPath);
+        }
 
         try {
             $response = Http::timeout(60)
@@ -147,14 +140,26 @@ Return the result in strictly JSON format with this structure:
     {
         $ingredientsList = implode(', ', $ingredients);
         
-        return "As a professional chef at DapurCerdas, create a delicious recipe using these ingredients: {$ingredientsList}. 
-        Focus on Indonesian or International cuisine that is easy to make at home.
+        // Load prompt from resources
+        $promptPath = resource_path('prompts/text/recipe_generation.md');
+        if (!file_exists($promptPath)) {
+            Log::warning('Prompt file not found, using fallback.', ['path' => $promptPath]);
+            return "Create a recipe using these ingredients: {$ingredientsList}";
+        }
+
+        $prompt = file_get_contents($promptPath);
         
-        Return the result in strictly JSON format with this structure:
+        // Simple placeholder replacement
+        $prompt = str_replace('{{INGREDIENT_LIST}}', $ingredientsList, $prompt);
+        $prompt = str_replace('{{SKILL_LEVEL}}', 'Home cook', $prompt); // Default for now
+        $prompt = str_replace('{{TIME_LIMIT}}', '30-45 minutes', $prompt); // Default for now
+
+        // Add standard JSON requirement for consistency with previous behavior if needed
+        $prompt .= "\n\nReturn the result in strictly JSON format with this structure:
         {
             \"title\": \"Recipe Name\",
             \"description\": \"A short appetizing description\",
-            \"cooking_time\": 30, (integer in minutes)
+            \"cooking_time\": 30,
             \"difficulty\": \"easy|medium|hard\",
             \"ingredients\": [
                 {\"name\": \"ingredient name\", \"amount\": \"quantity and unit\"},
@@ -162,7 +167,6 @@ Return the result in strictly JSON format with this structure:
             ],
             \"instructions\": [
                 \"Step 1 description\",
-                \"Step 2 description\",
                 ...
             ],
             \"nutrition\": {
@@ -172,5 +176,7 @@ Return the result in strictly JSON format with this structure:
                 \"carbs\": \"grams\"
             }
         }";
+
+        return $prompt;
     }
 }
