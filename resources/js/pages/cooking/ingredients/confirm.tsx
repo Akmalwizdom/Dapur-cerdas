@@ -10,6 +10,7 @@ export default function ConfirmIngredients() {
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
     const [manualIngredient, setManualIngredient] = useState('');
     const [isAddingManual, setIsAddingManual] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     const params = new URLSearchParams(window.location.search);
     const jobId = params.get('job_id');
@@ -56,8 +57,10 @@ export default function ConfirmIngredients() {
     }, [jobId]);
 
     const handleGenerateRecipe = async () => {
-        if (ingredients.length === 0) return;
+        if (ingredients.length === 0 || isGenerating) return;
 
+        console.log('Generating recipe with ingredients:', ingredients.map(i => i.name));
+        setIsGenerating(true);
         try {
             const response = await fetch('/cooking/recipes/generate', {
                 method: 'POST',
@@ -81,9 +84,11 @@ export default function ConfirmIngredients() {
                 router.visit(`/cooking/recipes/${data.data.id}`);
             } else {
                 alert('Generation failed: ' + data.message);
+                setIsGenerating(false);
             }
         } catch (err: any) {
             alert('Failed to connect to recipe engine: ' + err.message);
+            setIsGenerating(false);
         }
     };
 
@@ -254,21 +259,48 @@ export default function ConfirmIngredients() {
                         </div>
 
                         {/* Recipe Generation Section */}
-                        <div className="bg-[var(--cooking-primary)]/5 rounded-2xl p-8 border border-[var(--cooking-primary)]/20 flex flex-col md:flex-row items-center justify-between gap-6 mb-20">
+                        <div className="bg-[var(--cooking-primary)]/5 rounded-2xl p-8 border border-[var(--cooking-primary)]/20 flex flex-col md:flex-row items-center justify-between gap-6 mb-20 relative overflow-hidden">
+                            {isGenerating && (
+                                <div className="absolute top-0 left-0 h-1.5 w-1/2 bg-[var(--cooking-primary)] animate-[progress_1.5s_infinite_linear] rounded-full" />
+                            )}
+                            
                             <div className="flex-1">
                                 <h2 className="text-2xl font-bold font-['Newsreader',serif] mb-2">Ready to cook?</h2>
                                 <p className="text-gray-600 dark:text-gray-400">
-                                    We'll find the best recipes matching your {ingredients.length} ingredients, including pantry staples like olive oil and salt.
+                                    {isGenerating 
+                                        ? "DapurCerdas AI is crafting your recipes from the ingredients you provided..." 
+                                        : `We'll find the best recipes matching your ${ingredients.length} ingredients, including pantry staples like olive oil and salt.`}
                                 </p>
                             </div>
                             <button
                                 onClick={handleGenerateRecipe}
-                                className="w-full md:w-auto flex items-center justify-center gap-3 px-10 py-4 bg-[var(--cooking-primary)] text-white text-lg font-bold rounded-xl shadow-lg shadow-[var(--cooking-primary)]/20 hover:bg-[var(--cooking-primary)]/90 transition-all hover:-translate-y-1"
+                                disabled={isGenerating}
+                                className={`w-full md:w-auto flex items-center justify-center gap-3 px-10 py-4 text-white text-lg font-bold rounded-xl shadow-lg transition-all ${
+                                    isGenerating 
+                                    ? 'bg-gray-400 cursor-not-allowed shadow-none' 
+                                    : 'bg-[var(--cooking-primary)] shadow-[var(--cooking-primary)]/20 hover:bg-[var(--cooking-primary)]/90 hover:-translate-y-1'
+                                }`}
                             >
-                                <Sparkles className="w-5 h-5" />
-                                Generate Recipes
+                                {isGenerating ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        Generating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-5 h-5" />
+                                        Generate Recipes
+                                    </>
+                                )}
                             </button>
                         </div>
+
+                        <style dangerouslySetInnerHTML={{ __html: `
+                            @keyframes progress {
+                                0% { transform: translateX(-100%); }
+                                100% { transform: translateX(200%); }
+                            }
+                        `}} />
                     </>
                 )}
             </main>

@@ -58,6 +58,11 @@ class GeminiService
             $result = $response->json();
             $text = $result['candidates'][0]['content']['parts'][0]['text'] ?? '{}';
             
+            // Clean markdown backticks if present
+            if (preg_match('/^```(?:json)?\s*(.*?)\s*```$/s', trim($text), $matches)) {
+                $text = $matches[1];
+            }
+            
             return json_decode($text, true);
         } catch (Exception $e) {
             Log::error('Gemini API Connection Failed', ['error' => $e->getMessage()]);

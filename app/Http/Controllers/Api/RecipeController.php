@@ -28,6 +28,14 @@ class RecipeController extends Controller
         try {
             $recipeData = $this->gemini->generateRecipe($request->ingredients);
 
+            if (!$recipeData || !is_array($recipeData)) {
+                Log::error('Invalid Recipe Data received from Gemini', ['data' => $recipeData]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to parse recipe data. Please try again.'
+                ], 500);
+            }
+
             // Create recipe in database
             $recipe = Recipe::create([
                 'user_id' => $request->user()->id,
