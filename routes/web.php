@@ -38,6 +38,7 @@ Route::middleware(['auth', 'verified'])->prefix('cooking')->group(function () {
         })->name('cooking.recipes.recommendations');
 
         Route::get('/list', [App\Http\Controllers\Api\RecipeController::class, 'index'])->name('cooking.recipes.index');
+        Route::get('/my-recipes', [App\Http\Controllers\Api\RecipeController::class, 'myRecipes'])->name('cooking.recipes.my');
         Route::post('/generate', [App\Http\Controllers\Api\RecipeController::class, 'generate'])->name('cooking.recipes.generate');
         Route::post('/{recipe}/favorite', [App\Http\Controllers\Api\RecipeController::class, 'toggleFavorite'])->name('cooking.recipes.favorite');
 

@@ -62,7 +62,21 @@ class RecipeController extends Controller
     }
 
     /**
-     * List user's recipes.
+     * List user's recipes for the web interface.
+     */
+    public function myRecipes(Request $request)
+    {
+        $recipes = $request->user()->recipes()
+            ->latest()
+            ->get();
+
+        return \Inertia\Inertia::render('cooking/recipes/index', [
+            'recipes' => $recipes
+        ]);
+    }
+
+    /**
+     * List user's recipes (API).
      */
     public function index(Request $request): JsonResponse
     {

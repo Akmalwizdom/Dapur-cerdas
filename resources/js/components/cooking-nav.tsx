@@ -3,9 +3,9 @@ import { Menu, Search, User, LogOut, ChevronDown, Settings } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react';
 
 const navItems = [
-    { title: 'Recipes', href: '/cooking/recipes' },
-    { title: 'Pantry', href: '/cooking/ingredients/input' },
-    { title: 'Meal Plan', href: '/dashboard' },
+    { title: 'Home', href: '/dashboard' },
+    { title: 'My Recipes', href: '/cooking/recipes/my-recipes' },
+    { title: 'Add Ingredients', href: '/cooking/ingredients/input' },
 ];
 
 export default function CookingNav() {
