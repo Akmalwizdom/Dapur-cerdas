@@ -20,7 +20,8 @@ class DetectIngredientsJob implements ShouldQueue
 
     public function handle(GeminiService $gemini): void
     {
-        Cache::put("job_{$this->jobId}", ['status' => 'processing'], now()->addMinutes(10));
+        $existing = Cache::get("job_{$this->jobId}") ?: [];
+        Cache::put("job_{$this->jobId}", array_merge($existing, ['status' => 'processing']), now()->addHours(24));
 
         try {
             $results = $gemini->detectIngredients($this->imagePath);
@@ -31,24 +32,26 @@ class DetectIngredientsJob implements ShouldQueue
             // Gemini returns: { name: '...', confidence: 'high|medium|low', note: '...' }
             $formattedResults = array_map(function($ing) {
                 return [
-                    'class_name' => $ing['name'] ?? 'Unknown',
+                    'name' => $ing['name'] ?? 'Unknown',
                     'confidence' => (float)($ing['confidence'] ?? 0.5),
                     'note' => $ing['note'] ?? null,
                 ];
             }, $ingredients);
 
-            Cache::put("job_{$this->jobId}", [
+            $existing = Cache::get("job_{$this->jobId}") ?: [];
+            Cache::put("job_{$this->jobId}", array_merge($existing, [
                 'status' => 'completed',
                 'results' => $formattedResults,
                 'count' => count($formattedResults)
-            ], now()->addMinutes(30));
+            ]), now()->addHours(24));
 
             Log::info("Detection job {$this->jobId} completed successfully via Gemini.");
         } catch (\Exception $e) {
-            Cache::put("job_{$this->jobId}", [
+            $existing = Cache::get("job_{$this->jobId}") ?: [];
+            Cache::put("job_{$this->jobId}", array_merge($existing, [
                 'status' => 'failed',
                 'error' => $e->getMessage()
-            ], now()->addMinutes(30));
+            ]), now()->addHours(24));
 
             Log::error("Detection job {$this->jobId} failed: " . $e->getMessage());
         }

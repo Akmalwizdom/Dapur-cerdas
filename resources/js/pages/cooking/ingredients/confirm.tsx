@@ -33,10 +33,9 @@ export default function ConfirmIngredients() {
                     if (jobStatus === 'completed') {
                         setIngredients(data.data.results.map((d: any, index: number) => ({
                             id: `ai-${index}`,
-                            name: d.class_name,
+                            name: d.name, // Use 'name' from backend mapping
                             confidence: Math.round(d.confidence * 100),
-                            category: 'Detected',
-                            image: data.data.image_url || 'https://via.placeholder.com/150?text=' + d.class_name
+                            category: 'Detected'
                         })));
                         setStatus('completed');
                         clearInterval(pollInterval);
@@ -141,120 +140,118 @@ export default function ConfirmIngredients() {
 
                 {status === 'completed' && (
                     <>
-                        {/* Uploaded Image Preview */}
-                        {uploadedImage && (
-                            <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Uploaded Photo</h3>
-                                <div className="relative aspect-video max-h-[400px] w-full md:w-2/3 rounded-2xl overflow-hidden border-4 border-white shadow-xl">
-                                    <img 
-                                        src={uploadedImage} 
-                                        alt="Uploaded ingredients" 
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-                                    <div className="absolute bottom-4 left-6 flex items-center gap-2">
-                                        <div className="size-2 bg-green-500 rounded-full animate-pulse" />
-                                        <span className="text-white text-sm font-bold">Original Image</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Action Bar Quick Links */}
-                        <div className="flex items-center gap-4 mb-8">
-                            <Link href="/cooking/ingredients" className="flex items-center gap-2 px-4 py-2 bg-white border border-[var(--cooking-border)] rounded-xl hover:bg-gray-50 transition-all dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10">
-                                <Camera className="w-5 h-5 text-[var(--cooking-primary)]" />
-                                <span className="text-sm font-semibold">Scan More</span>
-                            </Link>
-                            <button 
-                                onClick={() => setIngredients([])}
-                                className="flex items-center gap-2 px-4 py-2 bg-white border border-[var(--cooking-border)] rounded-xl hover:bg-gray-50 transition-all dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10"
-                            >
-                                <RefreshCw className="w-5 h-5 text-gray-500" />
-                                <span className="text-sm font-semibold">Reset List</span>
-                            </button>
-                        </div>
-
-                        {/* Ingredient Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
-                            {ingredients.map((ingredient) => (
-                                <div
-                                    key={ingredient.id}
-                                    className="bg-white rounded-xl overflow-hidden border border-[var(--cooking-border)] shadow-sm hover:shadow-md transition-shadow group dark:bg-[var(--cooking-card-dark)] dark:border-white/10"
-                                >
-                                    <div
-                                        className="relative h-48 w-full bg-center bg-cover"
-                                        style={{ backgroundImage: `url("${ingredient.image}")` }}
-                                    >
-                                        <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Page Layout: Image & List */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
+                            {/* Left Side: Image Preview */}
+                            <div className="space-y-6">
+                                {uploadedImage ? (
+                                    <div className="sticky top-10">
+                                        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Your Photo</h3>
+                                        <div className="relative aspect-square md:aspect-auto md:h-[500px] w-full rounded-3xl overflow-hidden border-8 border-white shadow-2xl">
+                                            <img 
+                                                src={uploadedImage} 
+                                                alt="Uploaded ingredients" 
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                                            <div className="absolute bottom-6 left-8 flex items-center gap-3">
+                                                <div className="size-3 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.8)]" />
+                                                <span className="text-white text-lg font-bold">Live Kitchen Scan</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="mt-8 flex items-center gap-4">
+                                            <Link href="/cooking/ingredients" className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-white border-2 border-[var(--cooking-border)] rounded-2xl hover:bg-gray-50 transition-all font-bold text-gray-700">
+                                                <Camera className="w-5 h-5 text-[var(--cooking-primary)]" />
+                                                Scan Another
+                                            </Link>
                                             <button 
-                                                onClick={() => setIngredients(ingredients.filter(i => i.id !== ingredient.id))}
-                                                className="bg-white/90 p-2 rounded-full text-red-500 hover:bg-red-50 shadow-sm"
+                                                onClick={() => setIngredients([])}
+                                                className="flex items-center justify-center gap-2 px-6 py-4 bg-white border-2 border-[var(--cooking-border)] rounded-2xl hover:bg-gray-50 transition-all font-bold text-gray-700"
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                <RefreshCw className="w-5 h-5 text-gray-400" />
+                                                Reset
                                             </button>
                                         </div>
-                                        <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur rounded-full px-3 py-1 flex items-center gap-2 shadow-sm">
-                                            <div className="size-2 rounded-full bg-[var(--cooking-primary)]" />
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-700">
-                                                {ingredient.confidence}% Confidence
-                                            </span>
-                                        </div>
                                     </div>
-                                    <div className="p-4 flex items-center justify-between">
-                                        <div>
-                                            <h3 className="text-lg font-bold font-['Newsreader',serif]">{ingredient.name}</h3>
-                                            <p className="text-xs text-[var(--cooking-text-muted)]">{ingredient.category}</p>
-                                        </div>
-                                        <button className="text-[var(--cooking-primary)] hover:text-[var(--cooking-primary)]/80">
-                                            <Pencil className="w-5 h-5" />
-                                        </button>
+                                ) : (
+                                    <div className="h-[500px] bg-gray-100 rounded-3xl flex flex-col items-center justify-center border-4 border-dashed border-gray-200">
+                                        <Camera className="w-16 h-16 text-gray-300 mb-4" />
+                                        <p className="text-gray-400 font-bold">No photo available</p>
                                     </div>
-                                </div>
-                            ))}
+                                )}
+                            </div>
 
-                            {/* Empty State / Add More Card */}
-                            <div 
-                                onClick={() => setIsAddingManual(true)}
-                                className="flex flex-col items-center justify-center p-6 bg-transparent border-2 border-dashed border-[var(--cooking-border)] rounded-xl min-h-[12rem] text-center hover:bg-[var(--cooking-primary)]/5 transition-colors cursor-pointer group dark:border-white/20"
-                            >
-                                <div className="bg-[var(--cooking-primary)]/10 text-[var(--cooking-primary)] p-4 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                                    <Plus className="w-8 h-8" />
+                            {/* Right Side: Ingredient List */}
+                            <div className="space-y-8">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Detected Ingredients ({ingredients.length})</h3>
+                                    <button 
+                                        onClick={() => setIsAddingManual(true)}
+                                        className="text-[var(--cooking-primary)] font-bold text-sm flex items-center gap-1 hover:underline"
+                                    >
+                                        <Plus className="w-4 h-4" /> Add Manual
+                                    </button>
                                 </div>
-                                <h4 className="text-lg font-bold font-['Newsreader',serif]">Missing something?</h4>
-                                <p className="text-sm text-[var(--cooking-text-muted)] mt-1">Tap to add an ingredient manually</p>
+
+                                {/* Manual Add Form */}
+                                {isAddingManual && (
+                                    <div className="p-6 bg-[var(--cooking-primary)]/5 rounded-2xl border-2 border-[var(--cooking-primary)]/20 animate-in slide-in-from-top-4">
+                                        <h4 className="font-bold mb-3">Add missing item</h4>
+                                        <div className="flex gap-3">
+                                            <input 
+                                                autoFocus
+                                                type="text" 
+                                                value={manualIngredient}
+                                                onChange={(e) => setManualIngredient(e.target.value)}
+                                                onKeyPress={(e) => e.key === 'Enter' && handleAddManual()}
+                                                placeholder="e.g. Soy Sauce..."
+                                                className="flex-1 px-4 py-2 rounded-xl border-2 border-[var(--cooking-border)] focus:border-[var(--cooking-primary)] focus:outline-none"
+                                            />
+                                            <button onClick={handleAddManual} className="px-4 py-2 bg-[var(--cooking-primary)] text-white font-bold rounded-xl">Add</button>
+                                            <button onClick={() => setIsAddingManual(false)} className="px-4 py-2 bg-gray-200 text-gray-600 font-bold rounded-xl">×</button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="space-y-3">
+                                    {ingredients.length === 0 ? (
+                                        <div className="py-12 text-center text-gray-400 italic bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                                            No ingredients found yet.
+                                        </div>
+                                    ) : (
+                                        ingredients.map((ingredient) => (
+                                            <div 
+                                                key={ingredient.id}
+                                                className="group flex items-center justify-between p-5 bg-white rounded-2xl border-2 border-[var(--cooking-border)] hover:border-[var(--cooking-primary)]/30 transition-all shadow-sm hover:shadow-md"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`size-10 rounded-xl flex items-center justify-center ${ingredient.category === 'Detected' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+                                                        {ingredient.category === 'Detected' ? <Sparkles className="w-5 h-5" /> : <Pencil className="w-5 h-5" />}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-xl font-bold font-['Newsreader',serif]">{ingredient.name}</h4>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <span className="text-xs font-bold uppercase tracking-tight text-gray-400">{ingredient.category}</span>
+                                                            <span className="text-xs font-bold px-2 py-0.5 bg-gray-100 rounded-full text-gray-500">{ingredient.confidence}% confidence</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button className="p-2 text-gray-400 hover:text-[var(--cooking-primary)]"><Pencil className="w-5 h-5" /></button>
+                                                    <button 
+                                                        onClick={() => setIngredients(ingredients.filter(i => i.id !== ingredient.id))}
+                                                        className="p-2 text-gray-400 hover:text-red-500"
+                                                    >
+                                                        <Trash2 className="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
-
-                        {/* Manual Add Dialog / Inline form */}
-                        {isAddingManual && (
-                            <div className="mb-8 p-6 bg-white rounded-2xl border-2 border-[var(--cooking-primary)]/30 animate-in zoom-in-95 dark:bg-white/5">
-                                <h3 className="text-xl font-bold font-['Newsreader',serif] mb-4">Add Missing Ingredient</h3>
-                                <div className="flex gap-4">
-                                    <input 
-                                        autoFocus
-                                        type="text" 
-                                        value={manualIngredient}
-                                        onChange={(e) => setManualIngredient(e.target.value)}
-                                        onKeyPress={(e) => e.key === 'Enter' && handleAddManual()}
-                                        placeholder="e.g. Scallions, Oyster Sauce..."
-                                        className="flex-1 px-4 py-3 rounded-xl border border-[var(--cooking-border)] focus:outline-none focus:ring-2 focus:ring-[var(--cooking-primary)]/20"
-                                    />
-                                    <button 
-                                        onClick={handleAddManual}
-                                        className="px-6 py-3 bg-[var(--cooking-primary)] text-white font-bold rounded-xl"
-                                    >
-                                        Add
-                                    </button>
-                                    <button 
-                                        onClick={() => setIsAddingManual(false)}
-                                        className="px-6 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        )}
 
                         {/* Recipe Generation Section */}
                         <div className="bg-[var(--cooking-primary)]/5 rounded-2xl p-8 border border-[var(--cooking-primary)]/20 flex flex-col md:flex-row items-center justify-between gap-6 mb-20">

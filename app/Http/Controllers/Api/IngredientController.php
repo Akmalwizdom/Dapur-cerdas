@@ -30,7 +30,7 @@ class IngredientController extends Controller
             'status' => 'pending',
             'filename' => $request->file('image')->getClientOriginalName(),
             'image_url' => Storage::disk('public')->url($path),
-        ], now()->addMinutes(10));
+        ], now()->addHours(24));
 
         // Dispatch background job
         DetectIngredientsJob::dispatch($jobId, $fullPath);
