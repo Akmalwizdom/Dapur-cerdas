@@ -9,11 +9,12 @@ use Exception;
 class GeminiService
 {
     protected string $apiKey;
-    protected string $model = 'gemini-1.5-flash';
+    protected string $model;
 
     public function __construct()
     {
         $this->apiKey = config('services.gemini.key');
+        $this->model = config('services.gemini.model', 'gemini-3-flash-preview');
     }
 
     /**
