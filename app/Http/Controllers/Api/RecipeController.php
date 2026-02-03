@@ -68,7 +68,7 @@ class RecipeController extends Controller
     {
         $recipes = $request->user()->recipes()
             ->latest()
-            ->paginate(12);
+            ->paginate(10);
 
         return \Inertia\Inertia::render('cooking/recipes/index', [
             'recipes' => $recipes

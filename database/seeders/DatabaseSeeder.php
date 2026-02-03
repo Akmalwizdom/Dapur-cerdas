@@ -13,11 +13,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Get the first user or create one if none exists (fallback, though user likely exists)
+        $user = \App\Models\User::first();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        if (!$user) {
+            $user = \App\Models\User::factory()->create([
+                'name' => 'wizdom',
+                'email' => 'faiqihya@gmail.com',
+            ]);
+        }
+
+        // Create recipes for this user
+        \App\Models\Recipe::factory(12)->create([
+            'user_id' => $user->id,
         ]);
     }
 }

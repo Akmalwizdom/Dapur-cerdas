@@ -5,12 +5,7 @@ import { ArrowLeft, ArrowRight, Camera, Search, X, Loader2, AlertCircle } from '
 import { useEffect } from 'react';
 
 export default function IngredientInput() {
-    const [ingredients, setIngredients] = useState([
-        'Roma tomatoes',
-        'Garlic',
-        'Fresh Basil',
-        'Olive Oil',
-    ]);
+    const [ingredients, setIngredients] = useState<string[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
