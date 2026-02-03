@@ -62,7 +62,7 @@ return [
 
     'upload' => [
         'temp_path' => storage_path('app/tmp'),
-        'max_size_kb' => 5120,  // 5MB
+        'max_size_kb' => 15360,  // 15MB
         'allowed_types' => ['jpg', 'jpeg', 'png', 'webp'],
     ],
 

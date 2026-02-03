@@ -18,7 +18,7 @@ class IngredientController extends Controller
     public function upload(Request $request): JsonResponse
     {
         $request->validate([
-            'image' => 'required|image|max:5120', // Max 5MB
+            'image' => 'required|image|max:15360', // Max 15MB
         ]);
 
         $jobId = (string) Str::uuid();

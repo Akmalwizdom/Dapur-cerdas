@@ -66,7 +66,7 @@ export default function IngredientInput() {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                if (response.status === 413) throw new Error('File is too large (max 5MB)');
+                if (response.status === 413) throw new Error('File is too large (max 15MB)');
                 if (response.status === 419) throw new Error('Session expired. Please refresh the page.');
                 if (response.status === 401) throw new Error('Please log in to upload photos.');
                 throw new Error(errorData.message || `Upload failed with status ${response.status}`);
